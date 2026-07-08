@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consensus Algorithms in Blockchain — A Comparative Explorer</title>
+    <meta name="description" content="An interactive blockchain intelligence platform for exploring consensus algorithms, trilemma analysis, and cross-chain interoperability.">
+    <!-- Google Fonts: Space Grotesk for headings, Inter for body, Fira Code for data -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for interactive radar/spider charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Premium Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loader-content">
+            <div class="loader-hex-ring">
+                <div class="hex-segment"></div>
+                <div class="hex-segment"></div>
+                <div class="hex-segment"></div>
+                <div class="hex-segment"></div>
+                <div class="hex-segment"></div>
+                <div class="hex-segment"></div>
+            </div>
+            <div class="loader-text">
+                <span class="loader-label">INITIALIZING PROTOCOL</span>
+                <div class="loader-bar-track"><div class="loader-bar-fill" id="loader-bar"></div></div>
+                <span class="loader-pct" id="loader-pct">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layered Animated Cyber Background -->
+    <canvas id="particle-canvas"></canvas>
+    <div class="grid-overlay"></div>
+    <div class="scanline-overlay"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"></div>
+
+    <!-- Floating Glass Navigation -->
+    <header class="app-header" id="app-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-icon-wrap">
+                    <i data-lucide="shield-check" class="logo-icon"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Consensus Explorer</h1>
+                    <p>Blockchain Consensus Protocols & Architecture</p>
+                </div>
+            </div>
+            <nav class="header-actions">
+                <button id="toggle-guide-btn" class="btn btn-ghost">
+                    <i data-lucide="help-circle"></i>
+                    <span>Trilemma Guide</span>
+                </button>
+                <a href="#compatibility-matrix-section" class="btn btn-primary">
+                    <i data-lucide="shuffle"></i>
+                    <span>Compatibility Matrix</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Educational Drawer -->
+    <aside id="educational-drawer" class="drawer">
+        <div class="drawer-header">
+            <h3>Understanding Blockchain Core Concepts</h3>
+            <button id="close-drawer-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="drawer-content">
+            <div class="guide-section">
+                <h4><i data-lucide="triangle" class="sec-icon text-accent"></i> The Blockchain Trilemma</h4>
+                <p>Coined by Vitalik Buterin, the Trilemma asserts that a blockchain network can only satisfy <strong>two out of three</strong> properties simultaneously at a high level:</p>
+                <ul class="trilemma-bullets">
+                    <li><strong>Decentralization:</strong> The network is run by thousands of independent nodes rather than a single entity. Prevents censorship.</li>
+                    <li><strong>Security:</strong> The network resists attacks, double-spending, and malicious collusions (51% attacks, Sybil attacks).</li>
+                    <li><strong>Scalability:</strong> The network can handle high transaction throughput (Transactions Per Second - TPS) and offers low latency (fast block times).</li>
+                </ul>
+            </div>
+            <div class="guide-section">
+                <h4><i data-lucide="layers" class="sec-icon text-cyan"></i> Blockchain Layers Explained</h4>
+                <p>To overcome the Trilemma, blockchain architectures are structured in layered protocols:</p>
+                <div class="layer-item">
+                    <span class="layer-badge l0">Layer 0</span>
+                    <p><strong>Underlying Infrastructure:</strong> Network protocols and communication layers that allow multiple independent Layer 1 blockchains to connect and interoperate (e.g., Cosmos Tendermint, Polkadot Relay Chain).</p>
+                </div>
+                <div class="layer-item">
+                    <span class="layer-badge l1">Layer 1</span>
+                    <p><strong>Base Protocol:</strong> The primary architecture of the blockchain. Handles the core consensus mechanism, security, and smart contract execution natively (e.g., Bitcoin, Ethereum, Solana, Cardano).</p>
+                </div>
+                <div class="layer-item">
+                    <span class="layer-badge l2">Layer 2</span>
+                    <p><strong>Scaling Solutions:</strong> Protocols built on top of Layer 1. They process transactions off-chain to achieve higher scalability, then settle bundles of transactions back onto the secure L1 (e.g., Rollups like Arbitrum, Lightning Network for Bitcoin).</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <div id="drawer-overlay" class="drawer-overlay"></div>
+
+    <main class="main-layout">
+        <!-- Hero / Intro Section -->
+        <section class="hero-section" id="intro-section">
+            <div class="hero-content">
+                <div class="hero-badge"><i data-lucide="zap"></i> Blockchain Intelligence Platform</div>
+                <h2 class="hero-title">Decode the <span class="text-glow">Consensus</span> Layer</h2>
+                <p class="hero-subtitle">Before exploring consensus protocols, understand the decentralized database architecture and coordination problems they solve.</p>
+            </div>
+            <div class="intro-container">
+                <div class="intro-card glass tilt-card" id="intro-blockchain">
+                    <div class="card-corner tl"></div><div class="card-corner tr"></div><div class="card-corner bl"></div><div class="card-corner br"></div>
+                    <div class="intro-icon-box">
+                        <i data-lucide="boxes"></i>
+                    </div>
+                    <div class="intro-body">
+                        <span class="card-subtitle">BASE LAYER TECHNOLOGY</span>
+                        <h3>What is Blockchain?</h3>
+                        <p>
+                            A blockchain is a decentralized, distributed ledger that securely records transactions across a peer-to-peer network. Instead of relying on a central authority (like a bank or government), the network achieves trust through mathematical cryptography and redundant validation. Data is stored in chronological <strong>blocks</strong> linked together in an immutable cryptographical <strong>chain</strong>.
+                        </p>
+                    </div>
+                </div>
+                <div class="intro-card glass tilt-card" id="intro-consensus">
+                    <div class="card-corner tl"></div><div class="card-corner tr"></div><div class="card-corner bl"></div><div class="card-corner br"></div>
+                    <div class="intro-icon-box">
+                        <i data-lucide="handshake"></i>
+                    </div>
+                    <div class="intro-body">
+                        <span class="card-subtitle">COORDINATION ENGINE</span>
+                        <h3>What is Consensus?</h3>
+                        <p>
+                            Consensus is the operational protocol that enables distributed, untrusting nodes to agree on a single, shared ledger state. In a network where anyone can host a node, consensus algorithms solve the <strong>Byzantine Generals Problem</strong>—preventing malicious actors from submitting fraudulent logs, double-spending tokens, or hijacking the transaction ledger.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section Divider -->
+        <div class="section-divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+        <!-- Algorithm Selector -->
+        <section class="selector-section">
+            <div class="section-title">
+                <h2>Select a Consensus Protocol</h2>
+                <p>Click on any protocol to explore its core mechanics, scores, and ecosystem mapping.</p>
+            </div>
+            <div class="algorithm-grid" id="algorithm-selector-container"></div>
+        </section>
+
+        <!-- Section Divider -->
+        <div class="section-divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+        <!-- Dashboard Grid -->
+        <section class="dashboard-grid">
+            <div class="card card-overview glass tilt-card">
+                <div class="card-corner tl"></div><div class="card-corner tr"></div><div class="card-corner bl"></div><div class="card-corner br"></div>
+                <div class="card-header">
+                    <span class="card-subtitle" id="overview-tag">CONSTITUENT ENGINE</span>
+                    <h3 id="overview-title">Proof of Work (PoW)</h3>
+                    <div class="pulse-indicator active" id="overview-indicator"></div>
+                </div>
+                <div class="card-content">
+                    <p class="algorithm-description" id="overview-desc">A consensus mechanism where participants (miners) solve complex mathematical puzzles to validate transactions and secure the network.</p>
+                    <div class="flowchart-container">
+                        <div class="flowchart-title"><i data-lucide="activity"></i> Step-by-Step Consensus Flow</div>
+                        <div class="flowchart-steps" id="flowchart-steps-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-chart glass tilt-card">
+                <div class="card-corner tl"></div><div class="card-corner tr"></div><div class="card-corner bl"></div><div class="card-corner br"></div>
+                <div class="card-header">
+                    <span class="card-subtitle">THE TRILEMMA TRADE-OFF</span>
+                    <h3>Pillars Rating</h3>
+                </div>
+                <div class="card-content chart-layout">
+                    <div class="chart-container"><canvas id="trilemmaChart"></canvas></div>
+                    <div class="chart-breakdown">
+                        <div class="rating-bar-group">
+                            <div class="rating-label"><span>Decentralization</span><span class="rating-val" id="val-decentralization">9/10</span></div>
+                            <div class="rating-bar-track"><div class="rating-bar-fill bar-green" id="fill-decentralization" style="width: 90%;"></div></div>
+                            <p class="rating-note" id="desc-decentralization">High participation, anyone can mine, but mining pools lead to concentration.</p>
+                        </div>
+                        <div class="rating-bar-group">
+                            <div class="rating-label"><span>Security</span><span class="rating-val" id="val-security">10/10</span></div>
+                            <div class="rating-bar-track"><div class="rating-bar-fill bar-cyan" id="fill-security" style="width: 100%;"></div></div>
+                            <p class="rating-note" id="desc-security">Extremely high hash power makes double-spending economically infeasible.</p>
+                        </div>
+                        <div class="rating-bar-group">
+                            <div class="rating-label"><span>Scalability</span><span class="rating-val" id="val-scalability">2/10</span></div>
+                            <div class="rating-bar-track"><div class="rating-bar-fill bar-dim" id="fill-scalability" style="width: 20%;"></div></div>
+                            <p class="rating-note" id="desc-scalability">Low throughput (~7 TPS) and long block finality times (10-60 mins).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-mapping glass tilt-card">
+                <div class="card-corner tl"></div><div class="card-corner tr"></div><div class="card-corner bl"></div><div class="card-corner br"></div>
+                <div class="card-header">
+                    <span class="card-subtitle">ECOSYSTEM INTEGRATION</span>
+                    <h3>Blockchains & Cryptocurrency Mapping</h3>
+                </div>
+                <div class="card-content"><div class="blockchain-cards-grid" id="blockchain-mapping-container"></div></div>
+            </div>
+
+            <div class="card card-contracts glass tilt-card">
+                <div class="card-corner tl"></div><div class="card-corner tr"></div><div class="card-corner bl"></div><div class="card-corner br"></div>
+                <div class="card-header">
+                    <span class="card-subtitle">PROGRAMMABILITY</span>
+                    <h3>Smart Contract Languages</h3>
+                </div>
+                <div class="card-content">
+                    <p class="sec-meta-desc">The languages used to write applications on these chains, tightly constrained by the consensus security model:</p>
+                    <div class="languages-list" id="languages-list-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section Divider -->
+        <div class="section-divider"><div class="divider-line"></div><div class="divider-node"></div><div class="divider-line"></div></div>
+
+        <!-- Compatibility Matrix -->
+        <section class="matrix-section glass" id="compatibility-matrix-section">
+            <div class="card-corner tl"></div><div class="card-corner tr"></div><div class="card-corner bl"></div><div class="card-corner br"></div>
+            <div class="section-title text-center">
+                <span class="badge">CROSS-CHAIN INTEROPERABILITY</span>
+                <h2>Protocol Compatibility Matrix</h2>
+                <p>Click on any intersection cell to explore the consensus alignment, architectural compatibility, and bridging options between the two blockchains.</p>
+            </div>
+            <div class="matrix-legend">
+                <div class="legend-item"><span class="legend-dot status-compatible"></span> Shared Consensus (High Compatibility)</div>
+                <div class="legend-item"><span class="legend-dot status-hybrid"></span> Similar Engine / Hybrid Bridge (Partial)</div>
+                <div class="legend-item"><span class="legend-dot status-incompatible"></span> Different Architecture (Incompatible)</div>
+            </div>
+            <div class="matrix-container-outer"><div class="matrix-container-inner" id="compatibility-matrix-container"></div></div>
+        </section>
+    </main>
+
+    <!-- Modal -->
+    <div id="interop-modal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header"><h3>Interoperability Details</h3><span class="close-modal-btn">&times;</span></div>
+            <div class="modal-body" id="modal-body-content"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-divider"></div>
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="footer-logo"><i data-lucide="shield-check"></i> <span>Consensus Explorer</span></div>
+                <p>&copy; 2026 — Educational Blockchain Intelligence Platform</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://ethereum.org/en/developers/docs/consensus-mechanisms/" target="_blank" rel="noopener"><i data-lucide="external-link"></i> Ethereum Docs</a>
+                <a href="https://bitcoin.org/bitcoin.pdf" target="_blank" rel="noopener"><i data-lucide="external-link"></i> Bitcoin Whitepaper</a>
+                <a href="https://solana.com/solana-whitepaper.pdf" target="_blank" rel="noopener"><i data-lucide="external-link"></i> Solana Whitepaper</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
