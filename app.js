@@ -438,6 +438,9 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // 4. Setup Event Listeners for UI Components
         setupEventListeners();
+
+        // 4.5 Initialize Comparison Selectors
+        initComparisonSelectors();
         
         // 5. Initialize Lucide Icons for HTML elements
         lucide.createIcons();
@@ -823,6 +826,385 @@ function setupEventListeners() {
     });
 }
 
+// --- Algorithm Comparison Feature ---
+
+let compareChartInstance = null;
+
+// Populate comparison dropdowns with all algorithms
+function initComparisonSelectors() {
+    const selectA = document.getElementById("compare-algo-a");
+    const selectB = document.getElementById("compare-algo-b");
+    const compareBtn = document.getElementById("compare-btn");
+
+    Object.keys(consensusData).forEach(key => {
+        const algo = consensusData[key];
+        const optA = document.createElement("option");
+        optA.value = key;
+        optA.textContent = algo.name;
+        selectA.appendChild(optA);
+
+        const optB = document.createElement("option");
+        optB.value = key;
+        optB.textContent = algo.name;
+        selectB.appendChild(optB);
+    });
+
+    // Enable/disable compare button based on selections
+    const checkSelections = () => {
+        const a = selectA.value;
+        const b = selectB.value;
+        compareBtn.disabled = !a || !b || a === b;
+    };
+
+    selectA.addEventListener("change", checkSelections);
+    selectB.addEventListener("change", checkSelections);
+
+    compareBtn.addEventListener("click", () => {
+        const a = selectA.value;
+        const b = selectB.value;
+        if (a && b && a !== b) {
+            runComparison(a, b);
+        }
+    });
+}
+
+// Compute commonalities & differences between two algorithms
+function computeComparison(idA, idB) {
+    const a = consensusData[idA];
+    const b = consensusData[idB];
+
+    const commonalities = [];
+    const differences = [];
+
+    // 1. Trilemma score comparison
+    const trilemmaKeys = ["decentralization", "security", "scalability"];
+    trilemmaKeys.forEach(key => {
+        const scoreA = a.trilemma[key];
+        const scoreB = b.trilemma[key];
+        const label = key.charAt(0).toUpperCase() + key.slice(1);
+        if (scoreA === scoreB) {
+            commonalities.push({
+                label: `${label} Score`,
+                value: `Both protocols score ${scoreA}/10 for ${label.toLowerCase()}.`
+            });
+        } else {
+            differences.push({
+                label: `${label} Score`,
+                valueA: `${scoreA}/10 — ${a.trilemma_notes[key]}`,
+                valueB: `${scoreB}/10 — ${b.trilemma_notes[key]}`
+            });
+        }
+    });
+
+    // 2. Shared smart contract languages
+    const langsA = a.languages.map(l => l.name.toLowerCase().split("/")[0].trim());
+    const langsB = b.languages.map(l => l.name.toLowerCase().split("/")[0].trim());
+    const sharedLangs = [];
+    a.languages.forEach(lA => {
+        const nameA = lA.name.toLowerCase().split("/")[0].trim();
+        b.languages.forEach(lB => {
+            const nameB = lB.name.toLowerCase().split("/")[0].trim();
+            if (nameA === nameB && !sharedLangs.includes(lA.name)) {
+                sharedLangs.push(lA.name);
+            }
+        });
+    });
+    if (sharedLangs.length > 0) {
+        commonalities.push({
+            label: "Shared Smart Contract Languages",
+            value: `Both support: ${sharedLangs.join(", ")}.`
+        });
+    }
+
+    const uniqueLangsA = a.languages.filter(l => {
+        const n = l.name.toLowerCase().split("/")[0].trim();
+        return !langsB.some(lb => lb === n);
+    });
+    const uniqueLangsB = b.languages.filter(l => {
+        const n = l.name.toLowerCase().split("/")[0].trim();
+        return !langsA.some(la => la === n);
+    });
+    if (uniqueLangsA.length > 0 || uniqueLangsB.length > 0) {
+        differences.push({
+            label: "Unique Languages",
+            valueA: uniqueLangsA.length > 0 ? uniqueLangsA.map(l => `${l.name} (${l.chains})`).join(", ") : "None unique",
+            valueB: uniqueLangsB.length > 0 ? uniqueLangsB.map(l => `${l.name} (${l.chains})`).join(", ") : "None unique"
+        });
+    }
+
+    // 3. Shared blockchains (unlikely but check)
+    const chainsA = a.blockchains.map(bc => bc.name);
+    const chainsB = b.blockchains.map(bc => bc.name);
+    const sharedChains = chainsA.filter(c => chainsB.includes(c));
+    if (sharedChains.length > 0) {
+        commonalities.push({
+            label: "Shared Blockchain Networks",
+            value: `Both power: ${sharedChains.join(", ")}.`
+        });
+    }
+
+    // Always show different blockchains as a difference
+    const uniqueChainsA = a.blockchains.filter(bc => !chainsB.includes(bc.name));
+    const uniqueChainsB = b.blockchains.filter(bc => !chainsA.includes(bc.name));
+    if (uniqueChainsA.length > 0 || uniqueChainsB.length > 0) {
+        differences.push({
+            label: "Blockchain Ecosystems",
+            valueA: uniqueChainsA.map(bc => `${bc.name} (${bc.symbol})`).join(", ") || "—",
+            valueB: uniqueChainsB.map(bc => `${bc.name} (${bc.symbol})`).join(", ") || "—"
+        });
+    }
+
+    // 4. Consensus flow steps count
+    if (a.steps.length === b.steps.length) {
+        commonalities.push({
+            label: "Consensus Flow Complexity",
+            value: `Both protocols operate in ${a.steps.length} sequential phases.`
+        });
+    } else {
+        differences.push({
+            label: "Consensus Flow Steps",
+            valueA: `${a.steps.length} phases: ${a.steps.map(s => s.title).join(" → ")}`,
+            valueB: `${b.steps.length} phases: ${b.steps.map(s => s.title).join(" → ")}`
+        });
+    }
+
+    // 5. Layer analysis
+    const layersA = [...new Set(a.blockchains.map(bc => bc.layer))];
+    const layersB = [...new Set(b.blockchains.map(bc => bc.layer))];
+    const sharedLayers = layersA.filter(l => layersB.includes(l));
+    if (sharedLayers.length > 0) {
+        commonalities.push({
+            label: "Shared Operating Layers",
+            value: `Both operate on: ${sharedLayers.join(", ")}.`
+        });
+    }
+    const uniqueLayersA = layersA.filter(l => !layersB.includes(l));
+    const uniqueLayersB = layersB.filter(l => !layersA.includes(l));
+    if (uniqueLayersA.length > 0 || uniqueLayersB.length > 0) {
+        differences.push({
+            label: "Unique Operating Layers",
+            valueA: uniqueLayersA.length > 0 ? uniqueLayersA.join(", ") : "—",
+            valueB: uniqueLayersB.length > 0 ? uniqueLayersB.join(", ") : "—"
+        });
+    }
+
+    // 6. Overall trilemma strength profile
+    const sumA = a.trilemma.decentralization + a.trilemma.security + a.trilemma.scalability;
+    const sumB = b.trilemma.decentralization + b.trilemma.security + b.trilemma.scalability;
+    if (Math.abs(sumA - sumB) <= 2) {
+        commonalities.push({
+            label: "Overall Trilemma Balance",
+            value: `Similar composite scores (${sumA}/30 vs ${sumB}/30), indicating comparable overall trade-off profiles.`
+        });
+    } else {
+        const strongerLabel = sumA > sumB ? a.name : b.name;
+        differences.push({
+            label: "Trilemma Composite Score",
+            valueA: `${sumA}/30 total`,
+            valueB: `${sumB}/30 total`
+        });
+    }
+
+    // 7. Description philosophy
+    differences.push({
+        label: "Core Philosophy",
+        valueA: a.short_desc,
+        valueB: b.short_desc
+    });
+
+    return { commonalities, differences };
+}
+
+// Render the full comparison results
+function runComparison(idA, idB) {
+    const a = consensusData[idA];
+    const b = consensusData[idB];
+    const { commonalities, differences } = computeComparison(idA, idB);
+    const container = document.getElementById("compare-results-container");
+
+    container.innerHTML = `
+        <!-- Header badges -->
+        <div class="compare-header-bar">
+            <div class="compare-algo-badge side-a">
+                <div class="algo-badge-icon"><i data-lucide="${a.icon}"></i></div>
+                <div class="algo-badge-info">
+                    <h4>${a.name}</h4>
+                    <p>Protocol A</p>
+                </div>
+            </div>
+            <span class="compare-header-vs">VS</span>
+            <div class="compare-algo-badge side-b">
+                <div class="algo-badge-icon"><i data-lucide="${b.icon}"></i></div>
+                <div class="algo-badge-info">
+                    <h4>${b.name}</h4>
+                    <p>Protocol B</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlaid Radar Chart -->
+        <div class="compare-radar-wrapper">
+            <span class="card-subtitle">TRILEMMA OVERLAY</span>
+            <div class="compare-radar-chart-box">
+                <canvas id="compareRadarChart"></canvas>
+            </div>
+            <div class="compare-radar-legend">
+                <div class="compare-radar-legend-item">
+                    <div class="legend-swatch swatch-a"></div>
+                    <span>${a.name}</span>
+                </div>
+                <div class="compare-radar-legend-item">
+                    <div class="legend-swatch swatch-b"></div>
+                    <span>${b.name}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panels -->
+        <div class="compare-panels-grid">
+            <!-- Commonalities Panel -->
+            <div class="compare-panel panel-common">
+                <div class="compare-panel-header">
+                    <div class="panel-icon"><i data-lucide="check-circle"></i></div>
+                    <h4>Commonalities</h4>
+                    <span class="panel-count">${commonalities.length} found</span>
+                </div>
+                <div class="compare-panel-body" id="compare-common-body">
+                    ${commonalities.length === 0 ? `
+                        <div class="compare-empty-state">
+                            <i data-lucide="search-x"></i>
+                            <p>No significant commonalities detected between these protocols.</p>
+                        </div>
+                    ` : commonalities.map((item, i) => `
+                        <div class="compare-item" style="animation-delay: ${i * 0.06}s">
+                            <div class="compare-item-label">${item.label}</div>
+                            <div class="compare-item-value">${item.value}</div>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+
+            <!-- Differences Panel -->
+            <div class="compare-panel panel-diff">
+                <div class="compare-panel-header">
+                    <div class="panel-icon"><i data-lucide="git-branch"></i></div>
+                    <h4>Differences</h4>
+                    <span class="panel-count">${differences.length} found</span>
+                </div>
+                <div class="compare-panel-body" id="compare-diff-body">
+                    ${differences.length === 0 ? `
+                        <div class="compare-empty-state">
+                            <i data-lucide="search-x"></i>
+                            <p>No significant differences detected.</p>
+                        </div>
+                    ` : differences.map((item, i) => `
+                        <div class="compare-item" style="animation-delay: ${i * 0.06}s">
+                            <div class="compare-item-label">${item.label}</div>
+                            <div class="compare-diff-values">
+                                <div class="compare-diff-val val-a">
+                                    <span class="diff-val-name">${a.name}</span>
+                                    ${item.valueA}
+                                </div>
+                                <div class="compare-diff-val val-b">
+                                    <span class="diff-val-name">${b.name}</span>
+                                    ${item.valueB}
+                                </div>
+                            </div>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Show with animation
+    container.classList.remove("active");
+    void container.offsetWidth; // force reflow
+    container.classList.add("active");
+
+    // Render overlay radar chart
+    renderCompareRadarChart(a, b);
+
+    // Re-init icons
+    lucide.createIcons();
+
+    // Smooth scroll to results
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Render overlay radar chart for two algorithms
+function renderCompareRadarChart(a, b) {
+    if (compareChartInstance) {
+        compareChartInstance.destroy();
+    }
+
+    const ctx = document.getElementById("compareRadarChart").getContext("2d");
+    compareChartInstance = new Chart(ctx, {
+        type: "radar",
+        data: {
+            labels: ["Decentralization", "Security", "Scalability"],
+            datasets: [
+                {
+                    label: a.name,
+                    data: [a.trilemma.decentralization, a.trilemma.security, a.trilemma.scalability],
+                    backgroundColor: "rgba(0, 255, 136, 0.1)",
+                    borderColor: "rgba(0, 255, 136, 0.8)",
+                    borderWidth: 2,
+                    pointBackgroundColor: "#00FF88",
+                    pointBorderColor: "#050505",
+                    pointRadius: 5,
+                    pointHitRadius: 10
+                },
+                {
+                    label: b.name,
+                    data: [b.trilemma.decentralization, b.trilemma.security, b.trilemma.scalability],
+                    backgroundColor: "rgba(0, 229, 255, 0.1)",
+                    borderColor: "rgba(0, 229, 255, 0.8)",
+                    borderWidth: 2,
+                    pointBackgroundColor: "#00E5FF",
+                    pointBorderColor: "#050505",
+                    pointRadius: 5,
+                    pointHitRadius: 10
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    min: 0,
+                    max: 10,
+                    ticks: { display: false, stepSize: 2 },
+                    grid: { color: "rgba(0, 255, 136, 0.06)" },
+                    angleLines: { color: "rgba(0, 255, 136, 0.06)" },
+                    pointLabels: {
+                        color: "#B4BBB7",
+                        font: { family: "Inter", size: 11, weight: "600" }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: "rgba(10, 14, 10, 0.92)",
+                    borderColor: "rgba(0, 255, 136, 0.3)",
+                    borderWidth: 1,
+                    titleColor: "#00FF88",
+                    bodyColor: "#F7FFF8",
+                    titleFont: { family: "Space Grotesk", weight: "700" },
+                    bodyFont: { family: "Fira Code" },
+                    callbacks: {
+                        label: function (context) {
+                            return `${context.dataset.label}: ${context.raw}/10`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 // --- Futuristic UI Helper Logic ---
 
 // 0. Loading Screen
@@ -1018,7 +1400,7 @@ function initCardTilt() {
 
 // 4. Scroll-based Reveal Animations
 function initScrollReveal() {
-    const sections = document.querySelectorAll('.hero-section, .selector-section, .dashboard-grid, .matrix-section');
+    const sections = document.querySelectorAll('.hero-section, .selector-section, .dashboard-grid, .compare-section, .matrix-section');
     sections.forEach(s => s.classList.add('reveal-on-scroll'));
     
     const observer = new IntersectionObserver((entries) => {
