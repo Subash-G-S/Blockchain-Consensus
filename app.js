@@ -194,35 +194,6 @@ const consensusData = {
             { name: "Python", chains: "Counterparty", desc: "The Reference node implementation is written in Python, extending Bitcoin core functions through OP_RETURN meta code." },
             { name: "C++", chains: "Slimcoin Core", desc: "Core nodes are coded in C++ to optimize block verification schedules and peer connection protocols." }
         ]
-    },
-    dag: {
-        id: "dag",
-        name: "DAG / Leaderless Consensus",
-        icon: "git-branch",
-        short_desc: "Leaderless, blockless graph structures where each transaction validates previous ones.",
-        description: "Directed Acyclic Graph (DAG) consensus is a blockless ledger model. Instead of grouping transactions into sequential blocks via miners or committees, transactions are connected directly as a web. To submit a new transaction, a user must validate two or more previous transactions. This leaderless structure eliminates transaction fees and sequential queues, yielding incredible scalability and sub-second finality. However, bootstrap networks often require a coordinator to prevent early double-spends.",
-        trilemma: { decentralization: 5, security: 7, scalability: 10 },
-        trilemma_notes: {
-            decentralization: "Moderate. Fully peer-to-peer, but networks typically start with central elements (like IOTA's Coordinator or Hedera's governing council) to guarantee state ordering.",
-            security: "Good, but vulnerable in low-volume stages. Relies on a heavy flow of transactions and gossip protocols to entrench nodes and protect against double-spending.",
-            scalability: "Maximum scalability. The blockless layout allows transactions to process concurrently, where throughput naturally increases as network demand scales."
-        },
-        steps: [
-            { num: "01", title: "Graph Attachment", desc: "Users compile transactions and reference hashes of two unconfirmed transactions (tips) as parents." },
-            { num: "02", title: "Parent Validation", desc: "The user's client node audits the parents' histories to verify they do not conflict or double-spend." },
-            { num: "03", title: "Gossip Dissemination", desc: "The signed transaction is broadcast to neighbor nodes, spreading across the network in gossip rounds." },
-            { num: "04", title: "Entrenchment", desc: "As subsequent transactions build on top of this transaction, its cumulative weight grows, achieving permanent consensus." }
-        ],
-        blockchains: [
-            { name: "Hedera Hashgraph", symbol: "HBAR", layer: "Layer 1", desc: "Uses virtual voting over a gossip graph to achieve asynchronous BFT finality and enterprise speeds.", link: "https://hedera.com" },
-            { name: "IOTA", symbol: "IOTA", layer: "Layer 1", desc: "Pioneered the blockless feeless Tangle designed for micro-transfers in Internet of Things setups.", link: "https://iota.org" },
-            { name: "Fantom", symbol: "FTM", layer: "Layer 1", desc: "Executes smart contracts on Lachesis, a DAG-based aBFT engine supporting EVM logic with rapid finality.", link: "https://fantom.foundation" }
-        ],
-        languages: [
-            { name: "Solidity", chains: "Fantom (EVM)", desc: "Maintains full EVM standard compatibility, enabling developers to write typical Solidity contracts on a DAG backbone." },
-            { name: "Java", chains: "Hedera Core", desc: "Core node engines are written in Java, leveraging enterprise stability and supporting EVM smart contracts." },
-            { name: "Rust / Go", chains: "IOTA Core", desc: "Node clients (Hornet, Bee) are written in Go and Rust to execute low-latency data verification on embedded systems." }
-        ]
     }
 };
 
