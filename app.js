@@ -115,13 +115,13 @@ const consensusData = {
     },
     pbft: {
         id: "pbft",
-        name: "PBFT / Federated Consensus",
+        name: "PBFT Consensus",
         icon: "key",
         short_desc: "Institutional voting rounds that deliver immediate transaction finality.",
-        description: "Practical Byzantine Fault Tolerance (PBFT) and its Federated variants (like SCP) discard mining entirely in favor of multi-round voting. Nodes inside the network are pre-selected and verified. To finalize a block, nodes broadcast votes back and forth in three distinct rounds (Pre-prepare, Prepare, and Commit). It guarantees absolute finality once 2/3 of nodes agree. It is heavily utilized in enterprise and federated payment networks.",
+        description: "Practical Byzantine Fault Tolerance (PBFT) discard mining entirely in favor of multi-round voting. Nodes inside the network are pre-selected and verified. To finalize a block, nodes broadcast votes back and forth in three distinct rounds (Pre-prepare, Prepare, and Commit). It guarantees absolute finality once 2/3 of nodes agree. It is heavily utilized in enterprise and federated payment networks.",
         trilemma: { decentralization: 2, security: 9, scalability: 8 },
         trilemma_notes: {
-            decentralization: "Extremely low. Permissioned/federated systems rely on a static, trusted whitelist of validators, restricting public participation.",
+            decentralization: "Extremely low. Permissioned systems rely on a static, trusted whitelist of validators, restricting public participation.",
             security: "Extremely robust. It offers mathematical finality that resists up to 1/3 of nodes failing or lying. Forks are physically impossible.",
             scalability: "High. Achieves sub-second or 3-second block finalization with high throughput, but slows down significantly if the node count expands beyond a few hundred."
         },
@@ -339,7 +339,7 @@ const compatibilityMatrix = {
         status: "low", 
         label: "INCOMPATIBLE", 
         desc: "Solana PoH and VeChain PoA are incompatible.",
-        details: "Requires external trustless/federated bridges."
+        details: "Requires external trustless bridges."
     },
 
     "ATOM-ATOM": { status: "high", label: "NATIVE", desc: "Same network. Interoperates natively via IBC (Inter-Blockchain Communication)." },
